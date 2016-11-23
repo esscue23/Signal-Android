@@ -255,6 +255,10 @@ public class MessageSender {
       return false;
     }
 
+    if (TextSecurePreferences.isMultiDevice(context)) {
+      return false;
+    }
+
     return Util.isOwnNumber(context, recipient.getAddress());
   }
 

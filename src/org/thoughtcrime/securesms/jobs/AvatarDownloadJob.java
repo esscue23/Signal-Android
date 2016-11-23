@@ -22,6 +22,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
+import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,7 +106,7 @@ public class AvatarDownloadJob extends ContextJob implements InjectableType {
         database.updateAvatar(encodeId, avatar);
         inputStream.close();
       }
-    } catch (BitmapDecodingException | NonSuccessfulResponseCodeException | InvalidMessageException e) {
+    } catch (BitmapDecodingException | NonSuccessfulResponseCodeException | InvalidMessageException | PushNetworkException e) {
       Log.w(TAG, e);
     } finally {
       if (attachment != null)

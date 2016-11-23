@@ -9,19 +9,22 @@ import com.google.android.gms.security.ProviderInstaller;
 import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
+import org.whispersystems.signalservice.api.util.UptimeSleepTimer;
 
 public class AccountManagerFactory {
 
   private static final String TAG = AccountManagerFactory.class.getSimpleName();
 
   public static SignalServiceAccountManager createManager(Context context) {
+
     return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(context),
                                            TextSecurePreferences.getLocalNumber(context),
                                            TextSecurePreferences.getPushServerPassword(context),
-                                           BuildConfig.USER_AGENT);
+                                           TextSecurePreferences.getDeviceId(context),
+                                           BuildConfig.USER_AGENT, new UptimeSleepTimer());
   }
 
-  public static SignalServiceAccountManager createManager(final Context context, String number, String password) {
+  public static SignalServiceAccountManager createManager(final Context context, String number, String password, int deviceId) {
     if (new SignalServiceNetworkAccess(context).isCensored(number)) {
       new AsyncTask<Void, Void, Void>() {
         @Override
@@ -37,7 +40,7 @@ public class AccountManagerFactory {
     }
 
     return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(number),
-                                           number, password, BuildConfig.USER_AGENT);
+                                           number, password, deviceId, BuildConfig.USER_AGENT, new UptimeSleepTimer());
   }
 
 }
