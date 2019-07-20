@@ -4,6 +4,7 @@ import org.thoughtcrime.securesms.attachments.Attachment;
 import org.thoughtcrime.securesms.attachments.PointerAttachment;
 import org.thoughtcrime.securesms.contactshare.Contact;
 import org.thoughtcrime.securesms.database.Address;
+import org.thoughtcrime.securesms.linkpreview.LinkPreview;
 import org.thoughtcrime.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
@@ -26,8 +27,9 @@ public class IncomingMediaMessage {
   private final QuoteModel    quote;
   private final boolean       unidentified;
 
-  private final List<Attachment> attachments    = new LinkedList<>();
-  private final List<Contact>    sharedContacts = new LinkedList<>();
+  private final List<Attachment>  attachments    = new LinkedList<>();
+  private final List<Contact>     sharedContacts = new LinkedList<>();
+  private final List<LinkPreview> linkPreviews   = new LinkedList<>();
 
   public IncomingMediaMessage(Address from,
                               Optional<Address> groupId,
@@ -63,7 +65,9 @@ public class IncomingMediaMessage {
                               Optional<SignalServiceGroup> group,
                               Optional<List<SignalServiceAttachment>> attachments,
                               Optional<QuoteModel> quote,
-                              Optional<List<Contact>> sharedContacts)
+                              Optional<List<Contact>> sharedContacts,
+                              Optional<List<LinkPreview>> linkPreviews,
+                              Optional<Attachment> sticker)
   {
     this.push             = true;
     this.from             = from;
@@ -80,6 +84,11 @@ public class IncomingMediaMessage {
 
     this.attachments.addAll(PointerAttachment.forPointers(attachments));
     this.sharedContacts.addAll(sharedContacts.or(Collections.emptyList()));
+    this.linkPreviews.addAll(linkPreviews.or(Collections.emptyList()));
+
+    if (sticker.isPresent()) {
+      this.attachments.add(sticker.get());
+    }
   }
 
   public int getSubscriptionId() {
@@ -128,6 +137,10 @@ public class IncomingMediaMessage {
 
   public List<Contact> getSharedContacts() {
     return sharedContacts;
+  }
+
+  public List<LinkPreview> getLinkPreviews() {
+    return linkPreviews;
   }
 
   public boolean isUnidentified() {

@@ -19,7 +19,7 @@ package org.thoughtcrime.securesms;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -28,18 +28,16 @@ import android.os.AsyncTask;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
-import android.support.v4.util.Pair;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
-import org.thoughtcrime.securesms.logging.Log;
-
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.core.util.Pair;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -60,8 +58,9 @@ import org.thoughtcrime.securesms.components.viewpager.ExtendedOnPageChangedList
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord;
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader;
-import org.thoughtcrime.securesms.mediapreview.AlbumRailAdapter;
+import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.mediapreview.MediaPreviewViewModel;
+import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter;
 import org.thoughtcrime.securesms.mms.GlideApp;
 import org.thoughtcrime.securesms.mms.GlideRequests;
 import org.thoughtcrime.securesms.permissions.Permissions;
@@ -82,7 +81,7 @@ import java.util.WeakHashMap;
  */
 public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity implements RecipientModifiedListener,
                                                                                          LoaderManager.LoaderCallbacks<Pair<Cursor, Integer>>,
-                                                                                         AlbumRailAdapter.RailItemClickedListener
+                                                                                         MediaRailAdapter.RailItemListener
 {
 
   private final static String TAG = MediaPreviewActivity.class.getSimpleName();
@@ -101,7 +100,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   private TextView              caption;
   private View                  captionContainer;
   private RecyclerView          albumRail;
-  private AlbumRailAdapter      albumRailAdapter;
+  private MediaRailAdapter      albumRailAdapter;
   private ViewGroup             playbackControlsContainer;
   private Uri                   initialMediaUri;
   private String                initialMediaType;
@@ -111,6 +110,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   private boolean               leftIsRecent;
   private GestureDetector       clickDetector;
   private MediaPreviewViewModel viewModel;
+  private ViewPagerListener     viewPagerListener;
 
   private int restartItem = -1;
 
@@ -163,6 +163,11 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     mediaPager.setCurrentItem(mediaPager.getCurrentItem() + distanceFromActive);
   }
 
+  @Override
+  public void onRailItemDeleteClicked(int distanceFromActive) {
+    throw new UnsupportedOperationException("Callback unsupported.");
+  }
+
   @SuppressWarnings("ConstantConditions")
   private void initializeActionBar() {
     MediaItem mediaItem = getCurrentMediaItem();
@@ -208,10 +213,12 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   private void initializeViews() {
     mediaPager = findViewById(R.id.media_pager);
     mediaPager.setOffscreenPageLimit(1);
-    mediaPager.addOnPageChangeListener(new ViewPagerListener());
+
+    viewPagerListener = new ViewPagerListener();
+    mediaPager.addOnPageChangeListener(viewPagerListener);
 
     albumRail        = findViewById(R.id.media_preview_album_rail);
-    albumRailAdapter = new AlbumRailAdapter(GlideApp.with(this), this);
+    albumRailAdapter = new MediaRailAdapter(GlideApp.with(this), this, false);
 
     albumRail.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
     albumRail.setAdapter(albumRailAdapter);
@@ -254,7 +261,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
       }
 
       albumRail.setVisibility(previewData.getAlbumThumbnails().isEmpty() ? View.GONE : View.VISIBLE);
-      albumRailAdapter.setRecords(previewData.getAlbumThumbnails(), previewData.getActivePosition());
+      albumRailAdapter.setMedia(previewData.getAlbumThumbnails(), previewData.getActivePosition());
       albumRail.smoothScrollToPosition(previewData.getActivePosition());
 
       captionContainer.setVisibility(previewData.getCaption() == null ? View.GONE : View.VISIBLE);
@@ -434,27 +441,31 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   }
 
   @Override
-  public Loader<Pair<Cursor, Integer>> onCreateLoader(int id, Bundle args) {
+  public @NonNull Loader<Pair<Cursor, Integer>> onCreateLoader(int id, Bundle args) {
     return new PagingMediaLoader(this, conversationRecipient, initialMediaUri, leftIsRecent);
   }
 
   @Override
-  public void onLoadFinished(Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
+  public void onLoadFinished(@NonNull Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
     if (data != null) {
       @SuppressWarnings("ConstantConditions")
       CursorPagerAdapter adapter = new CursorPagerAdapter(this, GlideApp.with(this), getWindow(), data.first, data.second, leftIsRecent);
       mediaPager.setAdapter(adapter);
       adapter.setActive(true);
 
-      viewModel.setCursor(data.first, leftIsRecent);
+      viewModel.setCursor(this, data.first, leftIsRecent);
 
-      if (restartItem < 0) mediaPager.setCurrentItem(data.second);
-      else                 mediaPager.setCurrentItem(restartItem);
+      int item = restartItem >= 0 ? restartItem : data.second;
+      mediaPager.setCurrentItem(item);
+
+      if (item == 0) {
+        viewPagerListener.onPageSelected(0);
+      }
     }
   }
 
   @Override
-  public void onLoaderReset(Loader<Pair<Cursor, Integer>> loader) {
+  public void onLoaderReset(@NonNull Loader<Pair<Cursor, Integer>> loader) {
 
   }
 

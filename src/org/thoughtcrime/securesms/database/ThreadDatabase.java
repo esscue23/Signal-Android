@@ -22,9 +22,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import org.thoughtcrime.securesms.logging.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
@@ -40,6 +39,7 @@ import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
+import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.recipients.Recipient;
@@ -601,7 +601,11 @@ public class ThreadDatabase extends Database {
     SlideDeck slideDeck = ((MediaMmsMessageRecord)record).getSlideDeck();
     Slide     thumbnail = slideDeck.getThumbnailSlide();
 
-    return thumbnail != null ? thumbnail.getThumbnailUri() : null;
+    if (thumbnail != null) {
+      return thumbnail.getThumbnailUri();
+    }
+
+    return null;
   }
 
   private @NonNull String createQuery(@NonNull String where, int limit) {
@@ -687,7 +691,7 @@ public class ThreadDatabase extends Database {
         readReceiptCount = 0;
       }
 
-      return new ThreadRecord(context, body, snippetUri, recipient, date, count,
+      return new ThreadRecord(body, snippetUri, recipient, date, count,
                               unreadCount, threadId, deliveryReceiptCount, status, type,
                               distributionType, archived, expiresIn, lastSeen, readReceiptCount);
     }
