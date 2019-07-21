@@ -63,6 +63,7 @@ import org.whispersystems.signalservice.api.util.RealtimeSleepTimer;
 import org.whispersystems.signalservice.api.util.SleepTimer;
 import org.whispersystems.signalservice.api.util.UptimeSleepTimer;
 import org.whispersystems.signalservice.api.websocket.ConnectivityListener;
+import org.thoughtcrime.securesms.jobs.GroupSyncRequestJob;
 import org.whispersystems.signalservice.internal.util.DynamicCredentialsProvider;
 
 import dagger.Module;

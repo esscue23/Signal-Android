@@ -10,10 +10,10 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.IBinder;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.thoughtcrime.securesms.qr.QrCode;
 import org.thoughtcrime.securesms.service.LinkingService;

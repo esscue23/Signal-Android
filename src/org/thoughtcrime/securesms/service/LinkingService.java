@@ -4,10 +4,9 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.google.android.gms.gcm.GoogleCloudMessaging;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.BuildConfig;
@@ -16,8 +15,9 @@ import org.thoughtcrime.securesms.crypto.PreKeyUtil;
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.IdentityDatabase;
-import org.thoughtcrime.securesms.jobs.GcmRefreshJob;
 import org.thoughtcrime.securesms.jobs.GroupSyncRequestJob;
+import org.thoughtcrime.securesms.jobs.FcmRefreshJob;
+import org.thoughtcrime.securesms.gcm.FcmUtil;
 import org.thoughtcrime.securesms.push.SignalServiceNetworkAccess;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
@@ -89,10 +89,10 @@ public class LinkingService extends Service {
       int registrationId = KeyHelper.generateRegistrationId(false);
       String deviceName = "androidtest";
       SignalServiceAccountManager.NewDeviceRegistrationReturn ret = accountManager.finishNewDeviceRegistration(temporaryIdentity, temporarySignalingKey, false, true, registrationId, deviceName);
-      String gcmRegistrationId = GoogleCloudMessaging.getInstance(this).register(GcmRefreshJob.REGISTRATION_ID);
-      accountManager.setGcmId(Optional.of(gcmRegistrationId));
+      Optional<String> fcmToken = FcmUtil.getToken();
+      accountManager.setGcmId(fcmToken);
 
-      GroupSyncRequestJob groupSyncRequestJob = new GroupSyncRequestJob(this);
+      GroupSyncRequestJob groupSyncRequestJob = new GroupSyncRequestJob();
 
       /* save identity and deviceid */
       TextSecurePreferences.setDeviceId(this, ret.getDeviceId());
@@ -113,11 +113,10 @@ public class LinkingService extends Service {
       TextSecurePreferences.setVerifying(this, false);
       TextSecurePreferences.setPushRegistered(this, true);
       TextSecurePreferences.setPushServerPassword(this, password);
-      TextSecurePreferences.setSignalingKey(this, temporarySignalingKey);
       TextSecurePreferences.setSignedPreKeyRegistered(this, true);
       TextSecurePreferences.setPromptedPushRegistration(this, true);
       TextSecurePreferences.setWebsocketRegistered(this, true);
-      TextSecurePreferences.setGcmRegistrationId(this, gcmRegistrationId);
+      TextSecurePreferences.setFcmToken(this, fcmToken.get());
       TextSecurePreferences.setMultiDevice(this, true);
       TextSecurePreferences.setLocalRegistrationId(this, registrationId);
       DirectoryRefreshListener.schedule(this);

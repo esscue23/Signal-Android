@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import java.util.Optional;
 import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -492,7 +493,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
           }
 
           accountManager = AccountManagerFactory.createManager(RegistrationActivity.this, e164number, password, 1);
-          accountManager.requestSmsVerificationCode();
+          accountManager.requestSmsVerificationCode(smsRetrieverSupported, registrationState.captchaToken, Optional.empty());
 
           return new VerificationRequestResult(password, fcmToken, Optional.absent());
         } catch (IOException e) {
@@ -675,7 +676,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
         @Override
         protected Void doInBackground(Void... voids) {
           try {
-            accountManager.requestVoiceVerificationCode(Locale.getDefault(), registrationState.captchaToken);
+            accountManager.requestVoiceVerificationCode(Locale.getDefault(), registrationState.captchaToken, Optional.empty());
           } catch (CaptchaRequiredException e) {
             requestCaptcha(false);
           } catch (IOException e) {

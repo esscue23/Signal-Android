@@ -1,16 +1,14 @@
 package org.thoughtcrime.securesms.jobs;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.dependencies.SignalCommunicationModule;
-import org.thoughtcrime.securesms.jobmanager.JobParameters;
-import org.thoughtcrime.securesms.jobmanager.SafeData;
-import org.thoughtcrime.securesms.jobmanager.requirements.NetworkRequirement;
-import org.thoughtcrime.securesms.jobs.requirements.MasterSecretRequirement;
+import org.thoughtcrime.securesms.jobmanager.Job;
+import org.thoughtcrime.securesms.jobmanager.Data;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
@@ -24,19 +22,16 @@ import java.io.StringWriter;
 
 import javax.inject.Inject;
 
-import androidx.work.Data;
-
 /**
  * Created by Benni on 12.07.2016.
  */
-public class GroupSyncRequestJob extends ContextJob implements InjectableType {
+public class GroupSyncRequestJob extends BaseJob implements InjectableType {
     @Inject transient SignalServiceMessageSender messageSender;
 
-    public GroupSyncRequestJob(Context context) {
-        super(context, JobParameters.newBuilder()
-                .withNetworkRequirement()
-                .create());
-
+    public GroupSyncRequestJob() {
+    	super(new Job.Parameters.Builder()
+                           .addConstraint(NetworkConstraint.KEY)
+                           .build());
     }
 
 
@@ -69,7 +64,7 @@ public class GroupSyncRequestJob extends ContextJob implements InjectableType {
     }
 
     @Override
-    protected void initialize(@NonNull SafeData data) {
+    protected void initialize(@NonNull Data data) {
 
     }
 
