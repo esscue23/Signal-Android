@@ -9,6 +9,7 @@ import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.dependencies.SignalCommunicationModule;
 import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.Data;
+import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
@@ -27,6 +28,8 @@ import javax.inject.Inject;
  */
 public class GroupSyncRequestJob extends BaseJob implements InjectableType {
     @Inject transient SignalServiceMessageSender messageSender;
+
+    public static final String KEY = "GroupSyncRequestJob";
 
     public GroupSyncRequestJob() {
     	super(new Job.Parameters.Builder()
@@ -48,6 +51,11 @@ public class GroupSyncRequestJob extends BaseJob implements InjectableType {
     }
 
     @Override
+    public @NonNull String getFactoryKey() {
+        return KEY;
+    }
+
+    @Override
     public boolean onShouldRetry(Exception exception) {
         return false;
     }
@@ -57,13 +65,11 @@ public class GroupSyncRequestJob extends BaseJob implements InjectableType {
 
     }
 
-    @NonNull
     @Override
-    protected Data serialize(@NonNull Data.Builder dataBuilder) {
+    public @NonNull Data serialize() {
         return null;
     }
 
-    @Override
     protected void initialize(@NonNull Data data) {
 
     }
