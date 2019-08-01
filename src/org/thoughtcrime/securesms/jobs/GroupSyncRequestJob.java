@@ -78,4 +78,11 @@ public class GroupSyncRequestJob extends BaseJob implements InjectableType {
     public void onCanceled() {
 
     }
+
+    public static final class Factory implements Job.Factory<GroupSyncRequestJob> {
+        @Override
+        public @NonNull GroupSyncRequestJob create(@NonNull Parameters parameters, @NonNull Data data) {
+            return new GroupSyncRequestJob();
+        }
+    }
 }

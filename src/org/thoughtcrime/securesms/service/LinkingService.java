@@ -117,8 +117,10 @@ public class LinkingService extends Service {
       TextSecurePreferences.setPromptedPushRegistration(this, true);
       TextSecurePreferences.setWebsocketRegistered(this, true);
       TextSecurePreferences.setFcmToken(this, fcmToken.get());
+      TextSecurePreferences.setFcmDisabled(this, false);
       TextSecurePreferences.setMultiDevice(this, true);
       TextSecurePreferences.setLocalRegistrationId(this, registrationId);
+      TextSecurePreferences.setUnauthorizedReceived(this, false);
       DirectoryRefreshListener.schedule(this);
       RotateSignedPreKeyListener.schedule(this);
 
