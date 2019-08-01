@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.crypto.PreKeyUtil;
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.IdentityDatabase;
+import org.thoughtcrime.securesms.jobs.ContactSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.GroupSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.FcmRefreshJob;
 import org.thoughtcrime.securesms.gcm.FcmUtil;
@@ -93,6 +94,7 @@ public class LinkingService extends Service {
       accountManager.setGcmId(fcmToken);
 
       GroupSyncRequestJob groupSyncRequestJob = new GroupSyncRequestJob();
+      ContactSyncRequestJob contactSyncRequestJob = new ContactSyncRequestJob();
 
       /* save identity and deviceid */
       TextSecurePreferences.setDeviceId(this, ret.getDeviceId());
@@ -126,6 +128,7 @@ public class LinkingService extends Service {
 
       /* send sync groups */
       ApplicationContext.getInstance(this).getJobManager().add(groupSyncRequestJob);
+      ApplicationContext.getInstance(this).getJobManager().add(contactSyncRequestJob);
 
       intent = new Intent(LINKING_EVENT);
       LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
