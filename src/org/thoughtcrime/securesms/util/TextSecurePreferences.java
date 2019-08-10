@@ -659,6 +659,10 @@ public class TextSecurePreferences {
     return getStringPreference(context, SIGNALING_KEY_PREF, null);
   }
 
+  public static void setSignalingKey(Context context, String signalingKey) {
+    setStringPreference(context, SIGNALING_KEY_PREF, signalingKey);
+  }
+
   public static boolean isEnterImeKeyEnabled(Context context) {
     return getBooleanPreference(context, ENTER_PRESENT_PREF, false);
   }
