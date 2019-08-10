@@ -13,7 +13,9 @@ import org.thoughtcrime.securesms.gcm.FcmService;
 import org.thoughtcrime.securesms.jobs.AttachmentDownloadJob;
 import org.thoughtcrime.securesms.jobs.AttachmentUploadJob;
 import org.thoughtcrime.securesms.jobs.AvatarDownloadJob;
+import org.thoughtcrime.securesms.jobs.BlockedSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.CleanPreKeysJob;
+import org.thoughtcrime.securesms.jobs.ConfigurationSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.ContactSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.CreateSignedPreKeyJob;
 import org.thoughtcrime.securesms.jobs.FcmRefreshJob;
@@ -107,6 +109,8 @@ import dagger.Provides;
                                      TypingSendJob.class,
                                      GroupSyncRequestJob.class,
                                      ContactSyncRequestJob.class,
+                                     BlockedSyncRequestJob.class,
+                                     ConfigurationSyncRequestJob.class,
                                      AttachmentUploadJob.class,
                                      StickerDownloadJob.class,
                                      StickerPackPreviewRepository.class,

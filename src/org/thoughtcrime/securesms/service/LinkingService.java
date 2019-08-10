@@ -15,6 +15,8 @@ import org.thoughtcrime.securesms.crypto.PreKeyUtil;
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.IdentityDatabase;
+import org.thoughtcrime.securesms.jobs.BlockedSyncRequestJob;
+import org.thoughtcrime.securesms.jobs.ConfigurationSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.ContactSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.GroupSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.FcmRefreshJob;
@@ -96,6 +98,8 @@ public class LinkingService extends Service {
 
       GroupSyncRequestJob groupSyncRequestJob = new GroupSyncRequestJob();
       ContactSyncRequestJob contactSyncRequestJob = new ContactSyncRequestJob();
+      BlockedSyncRequestJob blockedSyncRequestJob = new BlockedSyncRequestJob();
+      ConfigurationSyncRequestJob configSyncRequestJob = new ConfigurationSyncRequestJob();
 
       /* save identity and deviceid */
       TextSecurePreferences.setDeviceId(this, ret.getDeviceId());
@@ -127,12 +131,16 @@ public class LinkingService extends Service {
       TextSecurePreferences.setProfileKey(this, Base64.encodeBytes(ret.getProfileKey()));
       TextSecurePreferences.setUnidentifiedAccessCertificate(this, accountManager.getSenderCertificate());
       TextSecurePreferences.setSignalingKey(this, temporarySignalingKey);
+
       DirectoryRefreshListener.schedule(this);
       RotateSignedPreKeyListener.schedule(this);
 
       /* send sync groups */
       ApplicationContext.getInstance(this).getJobManager().add(groupSyncRequestJob);
       ApplicationContext.getInstance(this).getJobManager().add(contactSyncRequestJob);
+      ApplicationContext.getInstance(this).getJobManager().add(blockedSyncRequestJob);
+      ApplicationContext.getInstance(this).getJobManager().add(configSyncRequestJob);
+
 
       intent = new Intent(LINKING_EVENT);
       LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
