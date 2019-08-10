@@ -39,6 +39,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -88,7 +89,7 @@ public class LinkingService extends Service {
       /* finish link */
       String temporarySignalingKey = Util.getSecret(52);
       int registrationId = KeyHelper.generateRegistrationId(false);
-      String deviceName = "androidtest";
+      String deviceName = "androidtest-" + UUID.randomUUID();
       SignalServiceAccountManager.NewDeviceRegistrationReturn ret = accountManager.finishNewDeviceRegistration(temporaryIdentity, temporarySignalingKey, false, true, registrationId, deviceName);
       Optional<String> fcmToken = FcmUtil.getToken();
       accountManager.setGcmId(fcmToken);
@@ -110,7 +111,7 @@ public class LinkingService extends Service {
 
       /* save own public key to DB */
       Recipient self = Recipient.from(this, Address.fromExternal(this, username), false);
-      DatabaseFactory.getIdentityDatabase(this).saveIdentity(self.getAddress(), ret.getIdentity().getPublicKey(), IdentityDatabase.VerifiedStatus.VERIFIED, true, 0, true);
+      DatabaseFactory.getIdentityDatabase(this).saveIdentity(self.getAddress(), ret.getIdentity().getPublicKey(), IdentityDatabase.VerifiedStatus.VERIFIED, true, System.currentTimeMillis(), true);
 
       TextSecurePreferences.setVerifying(this, false);
       TextSecurePreferences.setPushRegistered(this, true);
@@ -123,6 +124,9 @@ public class LinkingService extends Service {
       TextSecurePreferences.setMultiDevice(this, true);
       TextSecurePreferences.setLocalRegistrationId(this, registrationId);
       TextSecurePreferences.setUnauthorizedReceived(this, false);
+      TextSecurePreferences.setProfileKey(this, Base64.encodeBytes(ret.getProfileKey()));
+      TextSecurePreferences.setUnidentifiedAccessCertificate(this, accountManager.getSenderCertificate());
+      TextSecurePreferences.setSignalingKey(this, temporarySignalingKey);
       DirectoryRefreshListener.schedule(this);
       RotateSignedPreKeyListener.schedule(this);
 
