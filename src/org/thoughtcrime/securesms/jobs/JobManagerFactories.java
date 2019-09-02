@@ -70,6 +70,7 @@ public final class JobManagerFactories {
       put(StickerPackDownloadJob.KEY,                new StickerPackDownloadJob.Factory());
       put(TrimThreadJob.KEY,                         new TrimThreadJob.Factory());
       put(TypingSendJob.KEY,                         new TypingSendJob.Factory());
+      put(UpdateContactJob.KEY,                      new UpdateContactJob.Factory());
       put(UpdateApkJob.KEY,                          new UpdateApkJob.Factory());
     }};
   }
