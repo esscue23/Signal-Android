@@ -2,8 +2,9 @@ package org.thoughtcrime.securesms.jobs;
 
 
 import android.app.Application;
-import androidx.annotation.NonNull;
 import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
 
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
