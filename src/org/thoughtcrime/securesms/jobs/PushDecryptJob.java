@@ -5,12 +5,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.text.TextUtils;
+import android.util.Pair;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import android.text.TextUtils;
-import android.util.Pair;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -27,10 +28,10 @@ import org.signal.libsignal.metadata.ProtocolNoSessionException;
 import org.signal.libsignal.metadata.ProtocolUntrustedIdentityException;
 import org.signal.libsignal.metadata.SelfSendException;
 import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.ConversationListActivity;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.attachments.Attachment;
-import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment;
 import org.thoughtcrime.securesms.attachments.PointerAttachment;
 import org.thoughtcrime.securesms.attachments.UriAttachment;
@@ -99,7 +100,6 @@ import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
-import org.whispersystems.signalservice.api.crypto.AttachmentCipherInputStream;
 import org.whispersystems.signalservice.api.crypto.SignalServiceCipher;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer;
@@ -116,6 +116,7 @@ import org.whispersystems.signalservice.api.messages.calls.HangupMessage;
 import org.whispersystems.signalservice.api.messages.calls.IceUpdateMessage;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 import org.whispersystems.signalservice.api.messages.calls.SignalServiceCallMessage;
+import org.whispersystems.signalservice.api.messages.multidevice.ContactsMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceGroup;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceGroupsInputStream;
 import org.whispersystems.signalservice.api.messages.multidevice.ReadMessage;
@@ -126,8 +127,8 @@ import org.whispersystems.signalservice.api.messages.multidevice.StickerPackOper
 import org.whispersystems.signalservice.api.messages.multidevice.VerifiedMessage;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
-import org.whispersystems.signalservice.internal.util.DynamicCredentialsProvider;
 import org.whispersystems.signalservice.internal.push.UnsupportedDataMessageException;
+import org.whispersystems.signalservice.internal.util.DynamicCredentialsProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -140,6 +141,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 public class PushDecryptJob extends BaseJob {
 
   public static final String KEY = "PushDecryptJob";
@@ -151,6 +154,9 @@ public class PushDecryptJob extends BaseJob {
 
   private long messageId;
   private long smsMessageId;
+
+  @Inject SignalServiceMessageReceiver receiver;
+
 
   public PushDecryptJob(Context context) {
     this(context, -1);
@@ -293,6 +299,7 @@ public class PushDecryptJob extends BaseJob {
         else if (syncMessage.getRead().isPresent())                  handleSynchronizeReadMessage(syncMessage.getRead().get(), content.getTimestamp());
         else if (syncMessage.getVerified().isPresent())              handleSynchronizeVerifiedMessage(syncMessage.getVerified().get());
         else if (syncMessage.getStickerPackOperations().isPresent()) handleSynchronizeStickerPackOperation(syncMessage.getStickerPackOperations().get());
+        else if (syncMessage.getContacts().isPresent())              handleSynchronizeContactMessage(syncMessage.getContacts().get());
         else                                                         Log.w(TAG, "Contains no known sync types...");
       } else if (content.getCallMessage().isPresent()) {
         Log.i(TAG, "Got call message...");
@@ -349,6 +356,14 @@ public class PushDecryptJob extends BaseJob {
       Log.w(TAG, e);
       handleUnsupportedDataMessage(e.getSender(), e.getSenderDevice(), e.getGroup(), envelope.getTimestamp(), smsMessageId);
     }
+  }
+
+  private void handleSynchronizeContactMessage(ContactsMessage contactsMessage) {
+    Log.w(TAG, "handle synchronize contact message...");
+    SignalServiceAttachment contactAttachment = contactsMessage.getContactsStream();
+    SignalServiceAttachmentPointer aPointer = contactAttachment.asPointer();
+
+    ApplicationContext.getInstance(context).getJobManager().add(new UpdateContactJob(aPointer));
   }
 
   private void handleCallOfferMessage(@NonNull SignalServiceContent content,

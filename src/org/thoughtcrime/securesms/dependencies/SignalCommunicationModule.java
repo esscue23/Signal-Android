@@ -47,6 +47,7 @@ import org.thoughtcrime.securesms.jobs.SendReadReceiptJob;
 import org.thoughtcrime.securesms.jobs.StickerDownloadJob;
 import org.thoughtcrime.securesms.jobs.StickerPackDownloadJob;
 import org.thoughtcrime.securesms.jobs.TypingSendJob;
+import org.thoughtcrime.securesms.jobs.UpdateContactJob;
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository;
 import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.preferences.AppProtectionPreferenceFragment;
@@ -119,6 +120,7 @@ import dagger.Provides;
                                      MultiDeviceStickerPackOperationJob.class,
                                      MultiDeviceStickerPackSyncJob.class,
                                      LinkPreviewRepository.class,
+                                     UpdateContactJob.class,
                                      FcmJobService.class})
 public class SignalCommunicationModule {
 
