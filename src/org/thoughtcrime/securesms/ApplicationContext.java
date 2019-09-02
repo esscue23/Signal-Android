@@ -233,7 +233,7 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     this.incomingMessageObserver = new IncomingMessageObserver(this);
   }
 
-  private void initializeDependencyInjection() {
+  public void initializeDependencyInjection() {
     this.objectGraph = ObjectGraph.create(new SignalCommunicationModule(this, new SignalServiceNetworkAccess(this)),
                                           new AxolotlStorageModule(this));
   }
