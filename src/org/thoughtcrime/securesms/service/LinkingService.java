@@ -128,6 +128,10 @@ public class LinkingService extends Service {
       DirectoryRefreshListener.schedule(this);
       RotateSignedPreKeyListener.schedule(this);
 
+      // avoid authentication error without restart of app due to outdated credentials in injected
+      // message receiver instance; is there a better alternative to update the credentials?
+      ApplicationContext.getInstance(this).initializeDependencyInjection();
+
       /* send sync groups */
       ApplicationContext.getInstance(this).getJobManager().add(groupSyncRequestJob);
 
