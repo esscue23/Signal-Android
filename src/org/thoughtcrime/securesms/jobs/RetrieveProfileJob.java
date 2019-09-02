@@ -2,8 +2,9 @@ package org.thoughtcrime.securesms.jobs;
 
 
 import android.app.Application;
-import androidx.annotation.NonNull;
 import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.crypto.UnidentifiedAccessUtil;
@@ -20,10 +21,12 @@ import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.service.IncomingMessageObserver;
 import org.thoughtcrime.securesms.util.Base64;
 import org.thoughtcrime.securesms.util.IdentityUtil;
+import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.thoughtcrime.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.SignalServiceMessagePipe;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.crypto.InvalidCiphertextException;
@@ -48,6 +51,8 @@ public class RetrieveProfileJob extends BaseJob implements InjectableType {
   private static final String KEY_ADDRESS = "address";
 
   @Inject SignalServiceMessageReceiver receiver;
+  @Inject SignalServiceAccountManager accountManager;
+
 
   private final Recipient recipient;
 
@@ -206,6 +211,16 @@ public class RetrieveProfileJob extends BaseJob implements InjectableType {
 
       if (!Util.equals(plaintextProfileName, recipient.getProfileName())) {
         DatabaseFactory.getRecipientDatabase(context).setProfileName(recipient, plaintextProfileName);
+        Recipient self = Recipient.from(context, Address.fromExternal(context, TextSecurePreferences.getLocalNumber(context)), false);
+        if (self.equals(recipient)) {
+          try {
+            Log.w(TAG, "Set own profile name.");
+            accountManager.setProfileName(profileKey, plaintextProfileName);
+            TextSecurePreferences.setProfileName(context, plaintextProfileName);
+          } catch (IOException e) {
+            Log.w(TAG, e);
+          }
+        }
       }
     } catch (InvalidCiphertextException | IOException e) {
       Log.w(TAG, e);

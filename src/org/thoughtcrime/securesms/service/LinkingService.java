@@ -21,6 +21,8 @@ import org.thoughtcrime.securesms.jobs.ContactSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.GroupSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.FcmRefreshJob;
 import org.thoughtcrime.securesms.gcm.FcmUtil;
+import org.thoughtcrime.securesms.jobs.RetrieveProfileAvatarJob;
+import org.thoughtcrime.securesms.jobs.RetrieveProfileJob;
 import org.thoughtcrime.securesms.push.SignalServiceNetworkAccess;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
@@ -138,6 +140,10 @@ public class LinkingService extends Service {
       // avoid authentication error without restart of app due to outdated credentials in injected
       // message receiver instance; is there a better alternative to update the credentials?
       ApplicationContext.getInstance(this).initializeDependencyInjection();
+      
+      // retrieve profile and avatar
+      self.setProfileKey(ret.getProfileKey());
+      ApplicationContext.getInstance(this).getJobManager().add(new RetrieveProfileJob(self));
 
       /* send sync groups */
       ApplicationContext.getInstance(this).getJobManager().add(groupSyncRequestJob);
