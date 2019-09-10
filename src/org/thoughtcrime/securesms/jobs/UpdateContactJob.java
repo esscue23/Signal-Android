@@ -5,10 +5,14 @@ import android.graphics.Bitmap;
 import androidx.annotation.NonNull;
 
 import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.color.MaterialColor;
+import org.thoughtcrime.securesms.crypto.IdentityKeyUtil;
 import org.thoughtcrime.securesms.database.Address;
 import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.GroupDatabase;
 import org.thoughtcrime.securesms.database.GroupDatabase.GroupRecord;
+import org.thoughtcrime.securesms.database.IdentityDatabase;
+import org.thoughtcrime.securesms.database.RecipientDatabase;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.jobmanager.Data;
 import org.thoughtcrime.securesms.jobmanager.Job;
@@ -16,17 +20,26 @@ import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
 import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.mms.AttachmentStreamUriLoader.AttachmentModel;
 import org.thoughtcrime.securesms.recipients.Recipient;
+import org.thoughtcrime.securesms.service.IncomingMessageObserver;
 import org.thoughtcrime.securesms.util.BitmapDecodingException;
 import org.thoughtcrime.securesms.util.BitmapUtil;
+import org.thoughtcrime.securesms.util.DirectoryHelper;
 import org.thoughtcrime.securesms.util.GroupUtil;
 import org.thoughtcrime.securesms.util.Hex;
+import org.thoughtcrime.securesms.util.IdentityUtil;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
+import org.whispersystems.libsignal.IdentityKey;
+import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.SignalServiceMessagePipe;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceContact;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceContactsInputStream;
+import org.whispersystems.signalservice.api.messages.multidevice.VerifiedMessage;
+import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
+import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.internal.util.Base64;
@@ -35,6 +48,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.PKIXRevocationChecker;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -104,22 +119,64 @@ public class UpdateContactJob extends BaseJob implements InjectableType {
       return;
     }
 
-    DeviceContactsInputStream din = new DeviceContactsInputStream(c_in);
-    DeviceContact contact = null;
+    DeviceContactsListInputStream din = new DeviceContactsListInputStream(c_in);
+    List<DeviceContact> contacts = null;
     try {
-      contact = din.read();
+      contacts = din.readList();
     } catch (IOException e) {
       Log.w(TAG, e);
       return;
     }
-    if (contact.getNumber().equals(self.getAddress().toPhoneString())) {
-      try {
-        self.setProfileKey(Base64.decode(TextSecurePreferences.getProfileKey(context)));
-      } catch (IOException e) {
-        Log.w(TAG, e);
+
+    for (DeviceContact contact : contacts) {
+      if (contact.getNumber().equals(self.getAddress().toPhoneString())) {
+        try {
+          self.setProfileKey(Base64.decode(TextSecurePreferences.getProfileKey(context)));
+        } catch (IOException e) {
+          Log.w(TAG, e);
+        }
+        ApplicationContext.getInstance(context).getJobManager().add(new RetrieveProfileJob(self));
+      } else {
+        Address add = Address.fromExternal(context, contact.getNumber());
+        Recipient r = Recipient.from(context, add, false);
+        //r.setRegistered(RecipientDatabase.RegisteredState.UNKNOWN);
+        if (contact.getProfileKey().isPresent()) {
+          r.setProfileKey(contact.getProfileKey().get());
+        }
+        if (contact.getColor().isPresent()) {
+          try {
+            r.setColor(MaterialColor.fromSerialized(contact.getColor().get()));
+          } catch (MaterialColor.UnknownColorException e) {
+            Log.w(TAG, e);
+          }
+        }
+
+        if (contact.getName().isPresent()) {
+          r.setName(contact.getName().get());
+        }
+
+        IdentityDatabase.VerifiedStatus dbstatus = null;
+        IdentityKey identity = null;
+        if (contact.getVerified().isPresent()) {
+          VerifiedMessage.VerifiedState state = contact.getVerified().get().getVerified();
+          identity = contact.getVerified().get().getIdentityKey();
+          if (state == VerifiedMessage.VerifiedState.DEFAULT) {
+            dbstatus = IdentityDatabase.VerifiedStatus.DEFAULT;
+          } else if (state == VerifiedMessage.VerifiedState.UNVERIFIED) {
+            dbstatus = IdentityDatabase.VerifiedStatus.UNVERIFIED;
+          } else if (state == VerifiedMessage.VerifiedState.UNVERIFIED) {
+            dbstatus = IdentityDatabase.VerifiedStatus.VERIFIED;
+          }
+          
+          DatabaseFactory.getIdentityDatabase(context).saveIdentity(r.getAddress(), identity, dbstatus, true, System.currentTimeMillis(), true);
+        }
+
+        DirectoryHelper.refreshDirectoryFor(context, r);
+        ApplicationContext.getInstance(context).getJobManager().add(new RetrieveProfileJob(r));
+        DatabaseFactory.getThreadDatabase(context).getThreadIdFor(r);
       }
-      ApplicationContext.getInstance(context).getJobManager().add(new RetrieveProfileJob(self));
     }
+
   }
 
   @Override
@@ -152,6 +209,30 @@ public class UpdateContactJob extends BaseJob implements InjectableType {
       }
 
       return new UpdateContactJob(parameters, p);
+    }
+  }
+
+  public class DeviceContactsListInputStream extends DeviceContactsInputStream {
+    private final String TAG = DeviceContactsListInputStream.class.getSimpleName();
+
+    public DeviceContactsListInputStream(InputStream in) {
+      super(in);
+    }
+
+    public List<DeviceContact> readList() throws IOException {
+      List<DeviceContact> result = new LinkedList<>();
+      DeviceContact current = read();
+      while (current != null) {
+        if (current.getAvatar().isPresent()) {
+          // Immediately read the avatar in order to move the input stream to the correct position
+          // for reading next contact details
+          InputStream a_in = current.getAvatar().get().getInputStream();
+          while (a_in.read() != -1) {}
+        }
+        result.add(current);
+        current = read();
+      }
+      return result;
     }
   }
 }
