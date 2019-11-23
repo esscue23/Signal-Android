@@ -410,7 +410,7 @@ public class Util {
 
   public static int getDaysTillBuildExpiry() {
     int age = (int) TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - BuildConfig.BUILD_TIMESTAMP);
-    return 90 - age;
+    return 90;
   }
 
   @TargetApi(VERSION_CODES.LOLLIPOP)
