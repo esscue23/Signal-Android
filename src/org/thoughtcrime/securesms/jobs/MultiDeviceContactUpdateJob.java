@@ -36,6 +36,7 @@ import org.whispersystems.signalservice.api.messages.multidevice.DeviceContact;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceContactsOutputStream;
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.VerifiedMessage;
+import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.util.InvalidNumberException;
 
@@ -116,6 +117,11 @@ public class MultiDeviceContactUpdateJob extends BaseJob implements InjectableTy
   {
     if (!TextSecurePreferences.isMultiDevice(context)) {
       Log.i(TAG, "Not multi device, aborting...");
+      return;
+    }
+
+    if (TextSecurePreferences.getDeviceId(context) != SignalServiceAddress.DEFAULT_DEVICE_ID) {
+      Log.i(TAG, "Not master device, aborting...");
       return;
     }
 

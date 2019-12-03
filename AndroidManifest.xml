@@ -101,7 +101,7 @@
 
     <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCSx9xea86GwDKGznCAULE9Y5a8b-TfN9U"/>
+            android:value="AIzaSyDHgTzDaDH7iZzNA6XgcwLPC-z_JcZAbLs"/>
 
     <meta-data android:name="com.google.android.gms.version"
                android:value="@integer/google_play_services_version" />
@@ -337,6 +337,9 @@
               android:windowSoftInputMode="stateUnchanged"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
+    <activity android:name=".LinkingProgressActivity"
+              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+    
     <activity android:name=".stickers.StickerManagementActivity"
               android:launchMode="singleTask"
               android:theme="@style/TextSecure.LightTheme"
@@ -469,6 +472,7 @@
     <service android:enabled="true" android:name=".service.ApplicationMigrationService"/>
     <service android:enabled="true" android:exported="false" android:name=".service.KeyCachingService"/>
     <service android:enabled="true" android:name=".service.IncomingMessageObserver$ForegroundService"/>
+    <service android:enabled="true" android:name=".service.LinkingService"/>
 
     <service android:name=".service.QuickResponseService"
              android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"

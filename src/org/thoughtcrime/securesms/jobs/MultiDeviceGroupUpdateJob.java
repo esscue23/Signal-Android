@@ -23,6 +23,7 @@ import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentStre
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceGroup;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceGroupsOutputStream;
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
+import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.ByteArrayInputStream;
@@ -68,9 +69,10 @@ public class MultiDeviceGroupUpdateJob extends BaseJob implements InjectableType
   }
 
   @Override
+
   public void onRun() throws Exception {
-    if (!TextSecurePreferences.isMultiDevice(context)) {
-      Log.i(TAG, "Not multi device, aborting...");
+    if (TextSecurePreferences.getDeviceId(context) != SignalServiceAddress.DEFAULT_DEVICE_ID) {
+      Log.i(TAG, "Not master device, aborting...");
       return;
     }
 

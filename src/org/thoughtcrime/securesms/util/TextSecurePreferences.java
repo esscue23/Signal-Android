@@ -71,6 +71,7 @@ public class TextSecurePreferences {
   private static final String MMS_CUSTOM_USER_AGENT            = "pref_custom_mms_user_agent";
   private static final String THREAD_TRIM_ENABLED              = "pref_trim_threads";
   private static final String LOCAL_NUMBER_PREF                = "pref_local_number";
+  private static final String DEVICE_ID_PREF                   = "pref_device_id";
   private static final String VERIFYING_STATE_PREF             = "pref_verifying";
   public  static final String REGISTERED_GCM_PREF              = "pref_gcm_registered";
   private static final String GCM_PASSWORD_PREF                = "pref_gcm_password";
@@ -638,6 +639,14 @@ public class TextSecurePreferences {
     setStringPreference(context, LOCAL_NUMBER_PREF, localNumber);
   }
 
+  public static int getDeviceId(Context context) {
+    return getIntegerPreference(context, DEVICE_ID_PREF, 0);
+  }
+
+  public static void setDeviceId(Context context, int deviceId) {
+    setIntegerPrefrence(context, DEVICE_ID_PREF, deviceId);
+  }
+
   public static String getPushServerPassword(Context context) {
     return getStringPreference(context, GCM_PASSWORD_PREF, null);
   }
@@ -648,6 +657,10 @@ public class TextSecurePreferences {
 
   public static String getSignalingKey(Context context) {
     return getStringPreference(context, SIGNALING_KEY_PREF, null);
+  }
+
+  public static void setSignalingKey(Context context, String signalingKey) {
+    setStringPreference(context, SIGNALING_KEY_PREF, signalingKey);
   }
 
   public static boolean isEnterImeKeyEnabled(Context context) {

@@ -103,6 +103,9 @@
 
     <dimen name="alertview_small_icon_size">14dp</dimen>
 
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="recording_voice_lock_target">-150dp</dimen>
 
 </resources>

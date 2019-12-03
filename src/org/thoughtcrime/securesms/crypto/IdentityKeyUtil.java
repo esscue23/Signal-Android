@@ -116,16 +116,22 @@ public class IdentityKeyUtil {
 
     return new LinkedList<BackupProtos.SharedPreference>() {{
       add(BackupProtos.SharedPreference.newBuilder()
-                                       .setFile(MasterSecretUtil.PREFERENCES_NAME)
-                                       .setKey(IDENTITY_PUBLIC_KEY_PREF)
-                                       .setValue(preferences.getString(IDENTITY_PUBLIC_KEY_PREF, null))
-                                       .build());
+          .setFile(MasterSecretUtil.PREFERENCES_NAME)
+          .setKey(IDENTITY_PUBLIC_KEY_PREF)
+          .setValue(preferences.getString(IDENTITY_PUBLIC_KEY_PREF, null))
+          .build());
       add(BackupProtos.SharedPreference.newBuilder()
-                                       .setFile(MasterSecretUtil.PREFERENCES_NAME)
-                                       .setKey(IDENTITY_PRIVATE_KEY_PREF)
-                                       .setValue(preferences.getString(IDENTITY_PRIVATE_KEY_PREF, null))
-                                       .build());
+          .setFile(MasterSecretUtil.PREFERENCES_NAME)
+          .setKey(IDENTITY_PRIVATE_KEY_PREF)
+          .setValue(preferences.getString(IDENTITY_PRIVATE_KEY_PREF, null))
+          .build());
     }};
+  }
+
+  public static void setIdentityKeys(@NonNull Context context, @NonNull IdentityKeyPair identityKeyPair)
+  {
+    save(context, IDENTITY_PUBLIC_KEY_PREF, Base64.encodeBytes(identityKeyPair.getPublicKey().serialize()));
+    save(context, IDENTITY_PRIVATE_KEY_PREF, Base64.encodeBytes(identityKeyPair.getPrivateKey().serialize()));
   }
 
   private static boolean hasLegacyIdentityKeys(Context context) {

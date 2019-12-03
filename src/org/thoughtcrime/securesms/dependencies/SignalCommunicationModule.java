@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.jobs.SendReadReceiptJob;
 import org.thoughtcrime.securesms.jobs.StickerDownloadJob;
 import org.thoughtcrime.securesms.jobs.StickerPackDownloadJob;
 import org.thoughtcrime.securesms.jobs.TypingSendJob;
+import org.thoughtcrime.securesms.jobs.UpdateContactJob;
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository;
 import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.preferences.AppProtectionPreferenceFragment;
@@ -63,6 +64,8 @@ import org.whispersystems.signalservice.api.util.RealtimeSleepTimer;
 import org.whispersystems.signalservice.api.util.SleepTimer;
 import org.whispersystems.signalservice.api.util.UptimeSleepTimer;
 import org.whispersystems.signalservice.api.websocket.ConnectivityListener;
+import org.thoughtcrime.securesms.jobs.GroupSyncRequestJob;
+import org.whispersystems.signalservice.internal.util.DynamicCredentialsProvider;
 
 import dagger.Module;
 import dagger.Provides;
@@ -102,6 +105,7 @@ import dagger.Provides;
                                      MultiDeviceConfigurationUpdateJob.class,
                                      RefreshUnidentifiedDeliveryAbilityJob.class,
                                      TypingSendJob.class,
+                                     GroupSyncRequestJob.class,
                                      AttachmentUploadJob.class,
                                      StickerDownloadJob.class,
                                      StickerPackPreviewRepository.class,
@@ -110,6 +114,7 @@ import dagger.Provides;
                                      MultiDeviceStickerPackOperationJob.class,
                                      MultiDeviceStickerPackSyncJob.class,
                                      LinkPreviewRepository.class,
+                                     UpdateContactJob.class,
                                      FcmJobService.class})
 public class SignalCommunicationModule {
 
@@ -127,12 +132,16 @@ public class SignalCommunicationModule {
     this.networkAccess = networkAccess;
   }
 
+//<<<<<<< 7951df09ad1df135289e220d7a5e14aa585eec82
   @Provides
   synchronized SignalServiceAccountManager provideSignalAccountManager() {
     if (this.accountManager == null) {
       this.accountManager = new SignalServiceAccountManager(networkAccess.getConfiguration(context),
-                                                            new DynamicCredentialsProvider(context),
-                                                            BuildConfig.USER_AGENT);
+                                                          new DynamicCredentialsProvider(TextSecurePreferences.getLocalNumber(context),
+                                                              TextSecurePreferences.getPushServerPassword(context),
+                                                              TextSecurePreferences.getSignalingKey(context),
+                                                              TextSecurePreferences.getDeviceId(context)),
+                                                          BuildConfig.USER_AGENT, null);
     }
 
     return this.accountManager;
@@ -142,7 +151,10 @@ public class SignalCommunicationModule {
   synchronized SignalServiceMessageSender provideSignalMessageSender() {
     if (this.messageSender == null) {
       this.messageSender = new SignalServiceMessageSender(networkAccess.getConfiguration(context),
-                                                          new DynamicCredentialsProvider(context),
+                                                          new DynamicCredentialsProvider(TextSecurePreferences.getLocalNumber(context),
+                                                              TextSecurePreferences.getPushServerPassword(context),
+                                                              TextSecurePreferences.getSignalingKey(context),
+                                                              TextSecurePreferences.getDeviceId(context)),
                                                           new SignalProtocolStoreImpl(context),
                                                           BuildConfig.USER_AGENT,
                                                           TextSecurePreferences.isMultiDevice(context),
@@ -163,7 +175,10 @@ public class SignalCommunicationModule {
       SleepTimer sleepTimer =  TextSecurePreferences.isFcmDisabled(context) ? new RealtimeSleepTimer(context) : new UptimeSleepTimer();
 
       this.messageReceiver = new SignalServiceMessageReceiver(networkAccess.getConfiguration(context),
-                                                              new DynamicCredentialsProvider(context),
+                                                              new DynamicCredentialsProvider(TextSecurePreferences.getLocalNumber(context),
+                                                                  TextSecurePreferences.getPushServerPassword(context),
+                                                                  TextSecurePreferences.getSignalingKey(context),
+                                                                  TextSecurePreferences.getDeviceId(context)),
                                                               BuildConfig.USER_AGENT,
                                                               new PipeConnectivityListener(),
                                                               sleepTimer);
@@ -175,30 +190,6 @@ public class SignalCommunicationModule {
   @Provides
   synchronized SignalServiceNetworkAccess provideSignalServiceNetworkAccess() {
     return networkAccess;
-  }
-
-  private static class DynamicCredentialsProvider implements CredentialsProvider {
-
-    private final Context context;
-
-    private DynamicCredentialsProvider(Context context) {
-      this.context = context.getApplicationContext();
-    }
-
-    @Override
-    public String getUser() {
-      return TextSecurePreferences.getLocalNumber(context);
-    }
-
-    @Override
-    public String getPassword() {
-      return TextSecurePreferences.getPushServerPassword(context);
-    }
-
-    @Override
-    public String getSignalingKey() {
-      return TextSecurePreferences.getSignalingKey(context);
-    }
   }
 
   private class PipeConnectivityListener implements ConnectivityListener {
@@ -226,5 +217,4 @@ public class SignalCommunicationModule {
     }
 
   }
-
 }

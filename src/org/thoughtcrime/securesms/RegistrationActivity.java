@@ -236,7 +236,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     if (getIntent().getBooleanExtra(RE_REGISTRATION_EXTRA, false)) {
       skipButton.setVisibility(View.VISIBLE);
     } else {
-      skipButton.setVisibility(View.INVISIBLE);
+      skipButton.setVisibility(View.VISIBLE);
     }
 
     this.keyboard.setOnKeyPressListener(key -> {
@@ -491,8 +491,8 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
             fcmToken = Optional.absent();
           }
 
-          accountManager = AccountManagerFactory.createManager(RegistrationActivity.this, e164number, password);
-          accountManager.requestSmsVerificationCode(smsRetrieverSupported, registrationState.captchaToken);
+          accountManager = AccountManagerFactory.createManager(RegistrationActivity.this, e164number, password, 1);
+          accountManager.requestSmsVerificationCode(smsRetrieverSupported, registrationState.captchaToken, Optional.absent());
 
           return new VerificationRequestResult(password, fcmToken, Optional.absent());
         } catch (IOException e) {
@@ -675,7 +675,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
         @Override
         protected Void doInBackground(Void... voids) {
           try {
-            accountManager.requestVoiceVerificationCode(Locale.getDefault(), registrationState.captchaToken);
+            accountManager.requestVoiceVerificationCode(Locale.getDefault(), registrationState.captchaToken, Optional.absent());
           } catch (CaptchaRequiredException e) {
             requestCaptcha(false);
           } catch (IOException e) {
@@ -917,14 +917,9 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
   }
 
   private void handleCancel() {
-    TextSecurePreferences.setPromptedPushRegistration(RegistrationActivity.this, true);
-    Intent nextIntent = getIntent().getParcelableExtra("next_intent");
-
-    if (nextIntent == null) {
-      nextIntent = new Intent(RegistrationActivity.this, ConversationListActivity.class);
-    }
-
-    startActivity(nextIntent);
+    final RegistrationActivity self = RegistrationActivity.this;
+    Intent intent = new Intent(self,LinkingProgressActivity.class);
+    startActivity(intent);
     finish();
   }
 

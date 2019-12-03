@@ -59,6 +59,7 @@ public final class JobManagerFactories {
       put(RotateCertificateJob.KEY,                  new RotateCertificateJob.Factory());
       put(RotateProfileKeyJob.KEY,                   new RotateProfileKeyJob.Factory());
       put(RotateSignedPreKeyJob.KEY,                 new RotateSignedPreKeyJob.Factory());
+      put(GroupSyncRequestJob.KEY,                   new GroupSyncRequestJob.Factory());
       put(SendDeliveryReceiptJob.KEY,                new SendDeliveryReceiptJob.Factory());
       put(SendReadReceiptJob.KEY,                    new SendReadReceiptJob.Factory());
       put(ServiceOutageDetectionJob.KEY,             new ServiceOutageDetectionJob.Factory());
@@ -69,6 +70,7 @@ public final class JobManagerFactories {
       put(StickerPackDownloadJob.KEY,                new StickerPackDownloadJob.Factory());
       put(TrimThreadJob.KEY,                         new TrimThreadJob.Factory());
       put(TypingSendJob.KEY,                         new TypingSendJob.Factory());
+      put(UpdateContactJob.KEY,                      new UpdateContactJob.Factory());
       put(UpdateApkJob.KEY,                          new UpdateApkJob.Factory());
     }};
   }

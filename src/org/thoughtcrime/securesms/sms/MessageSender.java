@@ -47,6 +47,7 @@ import org.thoughtcrime.securesms.push.AccountManagerFactory;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
+import org.thoughtcrime.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.ContactTokenDetails;
@@ -209,6 +210,22 @@ public class MessageSender {
   private static boolean isGroupPushSend(Recipient recipient) {
     return recipient.getAddress().isGroup() &&
            !recipient.getAddress().isMmsGroup();
+  }
+
+  private static boolean isSelfSend(Context context, Recipient recipient) {
+    if (!TextSecurePreferences.isPushRegistered(context)) {
+      return false;
+    }
+
+    if (recipient.isGroupRecipient()) {
+      return false;
+    }
+
+    if (TextSecurePreferences.isMultiDevice(context)) {
+      return false;
+    }
+
+    return Util.isOwnNumber(context, recipient.getAddress());
   }
 
   private static boolean isPushDestination(Context context, Recipient destination) {
